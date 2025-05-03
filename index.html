@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Canvas com Várias Teclas</title>
+    <style>
+      #canvas {
+        border: 1px solid #000;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="400" height="200"></canvas>
+
+    <script>
+      class Key {
+        #pressed;
+
+        constructor(x, y, width, height, color, id) {
+          this.x = x;
+          this.y = y;
+          this.width = width;
+          this.height = height;
+          this.color = color;
+          this.id = id.toUpperCase(); // padrão consistente
+          this.#pressed = false;
+        }
+
+        draw(ctx) {
+          ctx.fillStyle = this.#pressed ? "red" : this.color;
+          ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+
+        press(value) {
+          this.#pressed = value;
+        }
+
+        contains(x, y) {
+          return (
+            x >= this.x &&
+            x <= this.x + this.width &&
+            y >= this.y &&
+            y <= this.y + this.height
+          );
+        }
+      }
+
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const keys = [
+        new Key(20, 50, 60, 100, "blue", "A"),
+        new Key(100, 50, 60, 100, "green", "B"),
+        new Key(180, 50, 60, 100, "orange", "C"),
+      ];
+
+      const activeKeys = [];
+
+      function drawAll() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        keys.forEach((key) => key.draw(ctx));
+      }
+
+      function updateKeysFromActiveList() {
+        keys.forEach((key) => {
+          key.press(activeKeys.includes(key.id));
+        });
+        drawAll();
+      }
+
+      // Eventos de mouse
+      canvas.addEventListener("mousedown", function (e) {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        keys.forEach((key) => {
+          if (key.contains(mouseX, mouseY)) {
+            if (!activeKeys.includes(key.id)) {
+              activeKeys.push(key.id);
+              updateKeysFromActiveList();
+            }
+          }
+        });
+      });
+
+      canvas.addEventListener("mouseup", function () {
+        activeKeys.length = 0; // limpa todas
+        updateKeysFromActiveList();
+      });
+
+      // Eventos de teclado
+      document.addEventListener("keydown", function (e) {
+        const keyPressed = e.key.toUpperCase();
+        if (!activeKeys.includes(keyPressed)) {
+          activeKeys.push(keyPressed);
+          updateKeysFromActiveList();
+        }
+      });
+
+      document.addEventListener("keyup", function (e) {
+        const keyReleased = e.key.toUpperCase();
+        const index = activeKeys.indexOf(keyReleased);
+        if (index !== -1) {
+          activeKeys.splice(index, 1);
+          updateKeysFromActiveList();
+        }
+      });
+
+      drawAll();
+    </script>
+  </body>
+</html>
